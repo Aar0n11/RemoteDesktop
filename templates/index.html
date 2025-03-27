@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hellow</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+    }
+    #screenCanvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="screenCanvas" tabindex="0"></canvas>
+
+  <script>
+    const screenCanvas = document.getElementById("screenCanvas");
+    const ctx = screenCanvas.getContext("2d");
+
+    function resizeCanvas() {
+      screenCanvas.width = window.innerWidth;
+      screenCanvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    // Update canvas with latest screenshot every second
+    function updateCanvas() {
+      fetch('/screenshot?' + new Date().getTime())
+        .then(response => response.blob())
+        .then(blob => {
+          const img = new Image();
+          img.onload = function() {
+            ctx.drawImage(img, 0, 0, screenCanvas.width, screenCanvas.height);
+          };
+          img.src = URL.createObjectURL(blob);
+        })
+        .catch(error => console.error('Error fetching screenshot:', error));
+    }
+    setInterval(updateCanvas, 200);
+
+    // nvas gets focus on click for key events
+    screenCanvas.addEventListener("click", () => screenCanvas.focus());
+
+    screenCanvas.addEventListener("keydown", (e) => {
+      fetch('/key', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key: e.key })
+      })
+      .then(response => response.json())
+      .then(data => console.log('Key sent:', data))
+      .catch(error => {
+          console.error('Error sending key:', error);
+          alert('Error sending key data');
+      });
+    });
+
+    // Throttle mousemove events using requestAnimationFrame
+    let mouseMoveScheduled = false;
+    let latestMousePos = null;
+
+    screenCanvas.addEventListener("mousemove", (e) => {
+      latestMousePos = {
+        x: e.clientX,
+        y: e.clientY,
+        screenWidth: window.innerWidth,
+        screenHeight: window.innerHeight
+      };
+
+      if (!mouseMoveScheduled) {
+        mouseMoveScheduled = true;
+        requestAnimationFrame(() => {
+          fetch('/move-mouse', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(latestMousePos)
+          })
+          .then(response => response.json())
+          .then(data => console.log('Mouse move sent:', data))
+          .catch(error => console.error('Error sending mouse move:', error));
+          mouseMoveScheduled = false;
+        });
+      }
+    });
+
+    screenCanvas.addEventListener("mousedown", (e) => {
+      fetch('/click', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: ""
+      })
+      .then(response => response.json())
+      .then(data => console.log('Click sent:', data))
+      .catch(error => {
+          console.error('Error sending click:', error);
+          alert('Error sending click data');
+      });
+    });
+  </script>
+</body>
+</html>
