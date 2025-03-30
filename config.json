@@ -1,0 +1,7 @@
+{
+    "port": 5000,
+    "screenshot_quality": 20,
+    "update_interval": 200,
+    "mouse_update_interval": 300,
+    "scroll_update_interval": 500
+}
