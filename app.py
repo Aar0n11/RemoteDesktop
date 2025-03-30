@@ -49,6 +49,36 @@ def click():
     except Exception as e:
         return jsonify({'status': 'error', 'message': f'Error clicking: {str(e)}'}), 500
 
+@app.route('/mousedown', methods=['POST'])
+def mouseDown():
+    try:
+        pyautogui.mouseDown()
+        return jsonify({'status': 'success', 'message': 'Mouse button down'})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': f'Error pressing mouse button: {str(e)}'}), 500
+
+@app.route('/mouseup', methods=['POST'])
+def mouseUp():
+    try:
+        pyautogui.mouseUp()
+        return jsonify({'status': 'success', 'message': 'Mouse button up'})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': f'Error releasing mouse button: {str(e)}'}), 500
+
+@app.route('/scroll', methods=['POST'])
+def scroll():
+    try:
+        data = request.get_json()
+        if not data or 'deltaY' not in data:
+            return jsonify({'status': 'error', 'message': 'Missing deltaY parameter'}), 400
+
+        deltaY = data['deltaY']
+        pyautogui.scroll(deltaY)
+
+        return jsonify({'status': 'success', 'message': f'Scrolled {deltaY} successfully'})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': f'Error scrolling: {str(e)}'}), 500
+
 @app.route('/key', methods=["POST"])
 def key():
     try:
@@ -73,11 +103,10 @@ def screenshot():
         img = Image.frombytes("RGB", sct_img.size, sct_img.rgb)
 
         img_io = io.BytesIO()
-        img.save(img_io, format="JPEG", quality=30)
+        img.save(img_io, format="JPEG", quality=20)
         img_io.seek(0)
 
     return send_file(img_io, mimetype='image/jpeg')
 
-
 if __name__ == '__main__':
-    app.run(debug=True, host="0.0.0.0", port=2000)
+    app.run(debug=True, host="0.0.0.0", port=5000)
